@@ -67,7 +67,7 @@ data_dx <- data.frame(label = dx_df$Dx,
                    color = RColorBrewer::brewer.pal(dim(dx_df)[1], 'Spectral'))
 plot_mnd_type = data_dx %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='MND', location='pie-center') %>%
   pie.subtitle(text='by Type') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
@@ -84,12 +84,12 @@ month_enrollment_df = as.data.frame(table(month_enrollment))
 month_enrollment_df$month_enrollment = 
   as.Date(month_enrollment_df$month_enrollment)
 plot_enrollment_month = ggplot(month_enrollment_df, aes(month_enrollment, Freq)) + 
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#99D594") +
   scale_x_date(date_labels = "%Y-%m") + 
   xlab("Month of enrollment") + 
   ylab("Number of patients enrolled") + 
   theme(axis.text.x = 
-          element_text(angle = 90, vjust = 0.5, hjust = 1)) 
+          element_text(angle = 45, vjust = 0.5, hjust = 1)) 
 
 # Plot: ALS sex composition 
 sex_df <- als %>% 
@@ -101,7 +101,7 @@ data_sex <- data.frame(label = sex_df$Sex,
                    color = c("#FC8D59","#99D594"))
 plot_sex = data_sex %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='ALS', location='pie-center') %>%
   pie.subtitle(text='by Sex') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
@@ -150,7 +150,7 @@ data_onset_region <- data.frame(label = onset_region_df$Onset_region,
                         color = RColorBrewer::brewer.pal(dim(onset_region_df)[1], 'Spectral'))
 plot_onset_region = data_onset_region %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='ALS', location='pie-center') %>%
   pie.subtitle(text='by onset region') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
@@ -184,6 +184,7 @@ plot_fu_duration = ggplot(fu_als_duration,
                                       median_fu_mo, 
                                       sep = " = "))
 
+# Time from entry to the latest visit 
 # Number of patients followed longer than 3, 6, 12 mo 
 fu_als_duration_gr = fu_als_duration %>%
   mutate(FU_duration_gr = cut(FU_duration, 
@@ -200,7 +201,7 @@ data_fu_duration_gr <- data.frame(label = temp$FU_duration_gr,
                                 color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
 plot_fu_duration_pie = data_fu_duration_gr %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='FU duration', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
@@ -283,8 +284,8 @@ plot_FVC_percent = ggplot(temp,
 
 # Event
 event_als = event %>%
-  filter(Study_ID %in% als$Study_ID) 
-table(event_als$Event) 
+  filter(Study_ID %in% als$Study_ID)
+
 # Gastrostomy 
 gastrostomy_als = event_als %>%
   filter(Event == "Gastrostomy")
@@ -446,7 +447,7 @@ plot_survival = ggsurvplot(fit, data = KM_5years,
            title = "KM estimates survival curve", 
            ggtheme = theme_bw())
 
-# plot: fu outcome pie chart 
+# plot: fu status, pie chart 
 data_death_tracheostomy = KM %>%
   filter(Outcome == "Death_or_tracheostomy") %>%
   filter(Status == 1) %>%
@@ -483,15 +484,15 @@ count_fu_outcome <- data.frame(label = temp$Outcome,
                           color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
 plot_fu_outcome = count_fu_outcome %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
-  pie.header(text='Outcome', location='pie-center') %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
+  pie.header(text='FU status', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
                         date_update_registry, sep = " "),
              location = 'bottom-left') %>%
   pie.tooltips()
 
-# plot: missing duration distribution 
+# plot: fu status, undefined  
 # time between the latest visit to registry update date (months)
 undefined_fu_outcome = data_fu_outcome %>% 
   filter(is.na(Outcome)) %>%
@@ -514,8 +515,8 @@ data_undefined_fu_outcome <- data.frame(label = temp$missing_dur_gr,
                                color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
 plot_undefined_fu_duration = data_undefined_fu_outcome %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
-  pie.header(text='Time since the latest visit (months)', location='pie-center') %>%
+  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
+  pie.header(text='Time from the latest visit', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
   pie.footer(text=paste('The SNU ALS/MND Registry', 
                         date_update_registry, sep = " "),
@@ -527,23 +528,12 @@ plot_undefined_fu_duration = data_undefined_fu_outcome %>%
 biobank = merge(biobank1, biobank2, by="Provider_Ocode")
 biobank_als = biobank %>%
   filter(Study_ID %in% als$Study_ID)
-
 biobank_als %>%
   select(Study_ID, Provider_Ocode, Sample_Bcode) -> biobank_als
-
 csf = biobank_als[grep("CSF", biobank_als$Sample_Bcode),]
 ser = biobank_als[grep("SER", biobank_als$Sample_Bcode),]
 buf = biobank_als[grep("BUF", biobank_als$Sample_Bcode),]
 pla = biobank_als[grep("PLA", biobank_als$Sample_Bcode),]
-
-# Number of patients (CSF) 
-length(unique(csf$Study_ID))
-# Number of patients (Buffycoate) 
-length(unique(buf$Study_ID))
-# Number of patients (Plasma)  
-length(unique(pla$Study_ID))
-# Number of patients (serum)  
-length(unique(ser$Study_ID))
 
 # FU samples: number of patients according to the number of FU sample
 
@@ -570,12 +560,9 @@ data_ser <- data.frame(label = temp$max_fu_gr,
                        color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
 plot_ser = data_ser %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=50, outer=70, width = 250, height = 300)  %>%
   pie.header(text='Serum', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
   pie.tooltips()
 
 # Plasma
@@ -601,12 +588,9 @@ data_pla <- data.frame(label = temp$max_fu_gr,
                        color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
 plot_pla = data_pla %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=50, outer=70, width = 250, height = 300)  %>%
   pie.header(text='Plasma', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
   pie.tooltips()
 
 
@@ -634,12 +618,9 @@ data_csf <- data.frame(label = temp$max_fu_gr,
                        color = colors_csf[1:dim(temp)[1]])
 plot_csf = data_csf %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=50, outer=70, width = 250, height = 300) %>%
   pie.header(text='CSF', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
   pie.tooltips()
 
 # Buffy coat
@@ -666,11 +647,8 @@ data_buf <- data.frame(label = temp$max_fu_gr,
                        color = colors_buf[1:dim(temp)[1]])
 plot_buf = data_buf %>%
   pier() %>%
-  pie.size(inner=70, outer=100, width = 500, height = 450) %>%
+  pie.size(inner=50, outer=70, width = 250, height = 300) %>%
   pie.header(text='Buffy coat', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
   pie.tooltips()
 

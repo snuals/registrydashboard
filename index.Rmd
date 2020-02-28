@@ -5,7 +5,7 @@ output:
     orientation: rows
     social: menu
     source_code: https://github.com/snuals/registrydashboard
-    vertical_layout: fill
+    vertical_layout: scroll
 ---
 
 ```{r setup, include=FALSE}
@@ -22,19 +22,219 @@ Baseline
 Row
 ------------------------------------------------------------------
 
-### Number of patients enrolled {.value-box}
+### Number of MND patients enrolled as of `r date_update_registry`
+```{r}
+valueBox(dim(baseline)[1], icon = "fa-user")
+```
 
+### Number of ALS patients enrolled as of `r date_update_registry`
+```{r}
+valueBox(dim(als)[1], icon = "fa-user")
+```
 
+### Number of ALS patients who died or got tracheostomy
+```{r}
+valueBox(dim(data_death_tracheostomy)[1], icon = "fa-user")
+```
 
 Row
 -----------------------------------------------------------------------
 
-### Chart B
-
+### Enrollment by month (since 2017-01)
 ```{r}
+ggplotly(plot_enrollment_month)
 ```
 
-### Chart C
-
+### MND types
 ```{r}
+plot_mnd_type
 ```
+
+Row
+-----------------------------------------------------------------------
+### Sex
+```{r}
+plot_sex
+```
+
+### Age distribution (ALS)
+```{r}
+ggplotly(plot_age)
+```
+
+Row
+----------------------------------------------------------------------
+### Onset region
+```{r}
+plot_onset_region
+```
+
+### Time from onset to diagnosis 
+```{r}
+ggplotly(plot_onset2dx)
+```
+
+Follow-up
+============================
+
+Row
+--------------------------
+### Time from entry to the latest visit
+```{r}
+plot_fu_duration_pie
+```
+
+### Distribution of FU duration 
+```{r}
+ggplotly(plot_fu_duration)
+```
+
+Row
+---------
+### ALSFRS Trajectory 
+```{r}
+ggplotly(plot_alsfrs)
+```
+
+Row
+--------
+### Weight Trajectory
+```{r}
+ggplotly(plot_wt)
+```
+
+### FVC Trajectory
+```{r}
+ggplotly(plot_FVC_percent)
+```
+
+Event 
+====================
+
+Row 
+------------------
+### Gastrostomy 
+```{r}
+gauge(gastrostromy_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
+### NIV
+```{r}
+gauge(NIV_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
+### Tracheostomy 
+```{r}
+gauge(Tracheostomy_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
+### Death  
+```{r}
+gauge(death_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
+Row 
+-----------
+### Follow-up status 
+```{r}
+plot_fu_outcome
+```
+
+### Term definition
+
+**Lost to fu**    
+should meet all the followings.   
+- not visited for the recent 6 months.   
+- can not be contacted (by phone) or refused to participate the registry any longer.   
+
+**Refer**   
+should meet all the followings.    
+- referred to other hospital.     
+- can not be contacted (by phone, up to 3 times) or refused to participate the registry any longer.      
+
+**Note**    
+Patients who were referred to other hospital should be contacted regularly (every 3 month) by phone, and the occurence of major events (gastrostomy, NIV, tracheostomy, death) should be monitored.        
+
+*Undefined*: should be one of the followings.       
+- under active follow-up.      
+- maybe belong to lost to fu category, but not contacted yet    
+- maybe belong to refer category, but not contacted yet      
+
+Row
+---------------
+
+### Time from the latest visit (Undefined FU status)
+```{r}
+plot_undefined_fu_duration
+```
+
+### KM estimate curve 
+```{r}
+plot_survival
+```
+
+Biorepository 
+======================
+
+Row
+----------------------- 
+
+### Serum (# of patients)  
+```{r}
+valueBox(length(unique(ser$Study_ID)))
+```
+
+### Plasma (# of patients) 
+```{r}
+valueBox(length(unique(pla$Study_ID)))
+```
+
+### CSF (# of patients)
+```{r}
+valueBox(length(unique(csf$Study_ID)))
+```
+
+### Buffy coat (# of patients) 
+```{r}
+valueBox(length(unique(buf$Study_ID)))
+```
+
+Row {data-height=300}
+----------------------------   
+
+### Serum 
+```{r}
+plot_ser
+```
+
+### Plasma 
+```{r}
+plot_pla
+```
+
+### CSF 
+```{r}
+plot_csf
+```
+
+### Buffy coat 
+```{r}
+plot_buf
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
