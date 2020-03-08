@@ -1,4 +1,5 @@
-# Dashboard: ALS registry progression
+# Dashboard: The SNU ALS registry 
+# https://github.com/snuals/registrydashboard
 
 library(dplyr)
 library(ggplot2)
