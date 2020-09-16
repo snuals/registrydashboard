@@ -3,6 +3,9 @@
 
 library(dplyr)
 library(ggplot2)
+
+#devtools::install_github("mrjoh3/pier")
+
 library(pier)
 library(plotly)
 library(survival)
@@ -105,6 +108,7 @@ all_na_cols = apply(fu, 2, function(x){all(is.na(x))})
 fu = fu[!(all_na_rows), !(all_na_cols)]
 fu$Date_visit = as.Date(fu$Date_visit, format = "%Y.%m.%d")
 fu$Mitos = factor(fu$Mitos)
+fu$FVC_percent = as.numeric(fu$FVC_percent)
 
 # event 
 event = read.csv(event_file, na.strings = c("", NA))
@@ -730,3 +734,4 @@ plot_buf = data_buf %>%
   pie.subtitle(text='ALS') %>%
   pie.tooltips()
 plot_buf
+
