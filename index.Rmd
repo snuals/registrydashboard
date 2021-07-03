@@ -26,19 +26,23 @@ Row
 ------------------------------------------------------------------
 
 ### Number of MND patients enrolled as of `r date_update_registry`
+
 ```{r}
 valueBox(dim(baseline)[1], icon = "fa-user")
 ```
 
 ### Number of ALS patients enrolled as of `r date_update_registry`
+
 ```{r}
 valueBox(dim(als)[1], icon = "fa-user")
 ```
 
 ### Number of ALS patients who died or got tracheostomy
+
 ```{r}
 valueBox(dim(data_death_tracheostomy)[1], icon = "fa-user")
 ```
+
 
 Row
 -----------------------------------------------------------------------

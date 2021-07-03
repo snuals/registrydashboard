@@ -1,6 +1,10 @@
 # Dashboard: The SNU ALS registry 
 # https://github.com/snuals/registrydashboard
 
+# Date of registry updated
+date_update_registry = Sys.Date()
+
+# Load packages 
 library(dplyr)
 library(ggplot2)
 
@@ -12,24 +16,34 @@ library(survival)
 library(survminer)
 
 ## Designate files 
-list_files = list.files("./data", pattern="*.csv")
-dx_file = paste("./data", list_files[grep("Dx", list_files)], sep = "/")
-fu_file = paste("./data", list_files[grep("Follow", list_files)], sep = "/")
-event_file = paste("./data", list_files[grep("Event", list_files)], sep = "/")
-close_file = paste("./data", list_files[grep("Close", list_files)], sep = "/")
-Biobank1_file = paste("./data", list_files[grep("Biobank1", list_files)], sep = "/")
-Biobank2_file = paste("./data", list_files[grep("Biobank2", list_files)], sep = "/")
+# list_files = list.files("./data", pattern="*.csv")
+# dx_file = paste("./data", list_files[grep("Dx", list_files)], sep = "/")
+# fu_file = paste("./data", list_files[grep("Follow", list_files)], sep = "/")
+# event_file = paste("./data", list_files[grep("Event", list_files)], sep = "/")
+# close_file = paste("./data", list_files[grep("Close", list_files)], sep = "/")
+# Biobank1_file = paste("./data", list_files[grep("Biobank1", list_files)], sep = "/")
+# Biobank2_file = paste("./data", list_files[grep("Biobank2", list_files)], sep = "/")
+# 
+# base = read.csv(dx_file, na.strings = c(NA, ""))
+# all_na_cols = apply(base, 2, function(x){all(is.na(x))})
+# all_na_rows = apply(base, 1, function(x){all(is.na(x))})
+# base = base[,!(all_na_cols)]
+# base = base[!(all_na_rows),]
 
-base = read.csv(dx_file, na.strings = c(NA, ""))
-all_na_cols = apply(base, 2, function(x){all(is.na(x))})
-all_na_rows = apply(base, 1, function(x){all(is.na(x))})
-base = base[,!(all_na_cols)]
-base = base[!(all_na_rows),]
 
-base$Date_birth = as.Date(base$Date_birth, format = "%Y.%m.%d")
-base$Date_onset = as.Date(base$Date_onset, format = "%Y.%m.%d")
-base$Date_dx = as.Date(base$Date_dx, format = "%Y.%m.%d")
-base$Date_enrollment = as.Date(base$Date_enrollment, format = "%Y.%m.%d")
+library(googlesheets4)
+base = read_sheet("https://docs.google.com/spreadsheets/d/1j1sFQdk9g3NvqqCO6V3mXtf0AoUXNCBmPPXF-WKj3Sk/edit?usp=sharing")
+fu = read_sheet("https://docs.google.com/spreadsheets/d/1ONU-QmIXBHV2AdHkXTBsavlF_y-5EomIXOD686LpGHE/edit?usp=sharing")
+event = read_sheet("https://docs.google.com/spreadsheets/d/1UE6xgj2wn4bs77NiJduMoPJGr_v2p6pNfaQW1GUr-ik/edit?usp=sharing")
+close = read_sheet("https://docs.google.com/spreadsheets/d/1oEosSmRXCRr5gVxmpIIwGLH7G-1UyKTds9MtxA2p9S0/edit?usp=sharing")
+biobank1 = read_sheet("https://docs.google.com/spreadsheets/d/1s_hc50zUIa9htn9CWXUMfkGf41XlNqLUqU8vMexSlF4/edit?usp=sharing")
+biobank2 = read_sheet("https://docs.google.com/spreadsheets/d/1KKYsXyDcYk14XWdg-oBENa970-DKYdWO7cqmBsBy2D0/edit?usp=sharing")
+
+# Base 
+base$Date_birth = as.Date(base$Date_birth, format = "%Y-%m-%d")
+base$Date_onset = as.Date(base$Date_onset, format = "%Y-%m-%d")
+base$Date_dx = as.Date(base$Date_dx, format = "%Y-%m-%d")
+base$Date_enrollment = as.Date(base$Date_enrollment, format = "%Y-%m-%d")
 
 # Date of diagnosis: distribution 
 month_dx = as.Date(cut(base$Date_dx, 
@@ -102,36 +116,33 @@ plot_enrollment_month = ggplot(month_enrollment_df, aes(month_enrollment, Freq))
 ggplotly(plot_enrollment_month)
 
 # fu 
-fu = read.csv(fu_file, na.strings = c(NA, ""))
-all_na_rows = apply(fu, 1, function(x){all(is.na(x))}) 
-all_na_cols = apply(fu, 2, function(x){all(is.na(x))}) 
-fu = fu[!(all_na_rows), !(all_na_cols)]
-fu$Date_visit = as.Date(fu$Date_visit, format = "%Y.%m.%d")
+#fu = read.csv(fu_file, na.strings = c(NA, ""))
+# all_na_rows = apply(fu, 1, function(x){all(is.na(x))}) 
+# all_na_cols = apply(fu, 2, function(x){all(is.na(x))}) 
+# fu = fu[!(all_na_rows), !(all_na_cols)]
+fu$Date_visit = as.Date(fu$Date_visit, format = "%Y-%m-%d")
 fu$Mitos = factor(fu$Mitos)
-fu$FVC_percent = as.numeric(fu$FVC_percent)
+#fu$FVC_percent = as.numeric(fu$FVC_percent)
+fu$King = factor(fu$King)
 
 # event 
-event = read.csv(event_file, na.strings = c("", NA))
-all_na_cols = apply(event, 2, function(x){all(is.na(x))})
-all_na_rows = apply(event, 1, function(x){all(is.na(x))})
-event = event[,!(all_na_cols)]
-event = event[!(all_na_rows),]
-event$Date_event = as.Date(event$Date_event, format = "%Y.%m.%d")
+# event = read.csv(event_file, na.strings = c("", NA))
+# all_na_cols = apply(event, 2, function(x){all(is.na(x))})
+# all_na_rows = apply(event, 1, function(x){all(is.na(x))})
+# event = event[,!(all_na_cols)]
+# event = event[!(all_na_rows),]
+event$Date_event = as.Date(event$Date_event, format = "%Y-%m-%d")
 
 # close 
-close = read.csv(close_file, na.strings = c("",NA))
-all_na_cols = apply(close, 2, function(x){all(is.na(x))})
-all_na_rows = apply(close, 1, function(x){all(is.na(x))})
-close = close[!all_na_rows, !all_na_cols]
-close$Date_close = as.Date(close$Date_close, format = "%Y.%m.%d")
+# close = read.csv(close_file, na.strings = c("",NA))
+# all_na_cols = apply(close, 2, function(x){all(is.na(x))})
+# all_na_rows = apply(close, 1, function(x){all(is.na(x))})
+# close = close[!all_na_rows, !all_na_cols]
+close$Date_close = as.Date(close$Date_close, format = "%Y-%m-%d")
 
 # biobank
-biobank1 = read.csv(Biobank1_file, na.strings = c("", NA))
-biobank2 = read.csv(Biobank2_file, na.strings = c("", NA))
-
-# Date of registry updated
-date_update = strsplit(dx_file, split = "_")[[1]][3]
-date_update_registry = as.Date(date_update, format = "%Y%m%d")
+# biobank1 = read.csv(Biobank1_file, na.strings = c("", NA))
+# biobank2 = read.csv(Biobank2_file, na.strings = c("", NA))
 
 # Dx: ALS 
 als <- baseline %>%
