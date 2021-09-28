@@ -40,7 +40,7 @@ valueBox(dim(als)[1], icon = "fa-user")
 ### Number of ALS patients who died or got tracheostomy
 
 ```{r}
-valueBox(dim(data_death_tracheostomy)[1], icon = "fa-user")
+valueBox(dim(time_df_close[!is.na(time_df_close$Date_death_tracheo),])[1], icon = "fa-user")
 ```
 
 
@@ -64,7 +64,7 @@ Row
 plot_sex
 ```
 
-### Age distribution (ALS)
+### Age distribution at diagnosis (ALS)
 ```{r}
 ggplotly(plot_age)
 ```
@@ -76,25 +76,31 @@ Row
 plot_onset_region
 ```
 
-### Time from onset to diagnosis 
+### Time between onset, diagnosis, enrollment and the first visit  
 ```{r}
-ggplotly(plot_onset2dx)
+ggplotly(plot_time_initial)
 ```
 
 Follow-up
 ============================
 
+
 Row
 --------------------------
-### Time from entry to the latest visit
-```{r}
-plot_fu_duration_pie
-```
+
 
 ### Distribution of FU duration 
 ```{r}
 ggplotly(plot_fu_duration)
 ```
+
+
+### Time from the 1st to the latest visit
+```{r}
+plot_fu_duration_pie
+```
+ 
+
 
 Row
 ---------
@@ -115,70 +121,94 @@ ggplotly(plot_wt)
 ggplotly(plot_FVC_percent)
 ```
 
-Event 
+Event & Close  
 ====================
 
 Row 
 ------------------
 ### Gastrostomy 
 ```{r}
-gauge(gastrostromy_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+gauge(event_df[event_df$Event == "Gastrostomy",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
 ```
 
 ### NIV
 ```{r}
-gauge(NIV_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+gauge(event_df[event_df$Event == "NIV",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
 ```
 
 ### Tracheostomy 
 ```{r}
-gauge(Tracheostomy_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+gauge(event_df[event_df$Event == "Tracheostomy",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
 ```
+
+
+Row 
+------------------
 
 ### Death  
 ```{r}
-gauge(death_pct, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+gauge(close_df[close_df$Event == "Death",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
 ```
+
+### Refer  
+```{r}
+gauge(close_df[close_df$Event == "Refer",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
+### Lost to f/u  
+```{r}
+gauge(close_df[close_df$Event == "Lost to f/u",]$Prop, min = 0, max = 100, symbol = '%', gaugeSectors(success = c(20, 100), warning = c(10, 19), danger = c(0, 9)))
+```
+
 
 Row 
 -----------
-### Follow-up status 
-```{r}
-plot_fu_outcome
-```
 
 ### Term definition
 
+*Close refers to the end of all tracking attempts, which includes death, refer, and lost to f/u*   
+*Note that this does not apply to the patients who are under tracking by any means (for example, phone)*   
+
 **Lost to fu**    
 should meet all the followings.   
-- not visited for the recent 6 months.   
-- can not be contacted (by phone) or refused to participate the registry any longer.   
+- not visited for the recent 6 months, and    
+- can not be contacted (by phone) or the patient refused to participate the registry any longer.   
 
 **Refer**   
 should meet all the followings.    
-- referred to other hospital.     
-- can not be contacted (by phone, up to 3 times) or refused to participate the registry any longer.      
+- referred to local hospital, and   
+- can not be contacted (by phone) or the patient refused to participate the registry any longer.      
 
 **Note**    
-Patients who were referred to other hospital should be contacted regularly (every 3 month) by phone, and the occurence of major events (gastrostomy, NIV, tracheostomy, death) should be monitored.        
+Patients who were referred to local hospital should be contacted regularly (every 3 month) by phone, and the occurence of major events (gastrostomy, NIV, tracheostomy, death) should be tracked.          
 
-*Undefined*: should be one of the followings.       
-- under active follow-up.      
-- maybe belong to lost to fu category, but not contacted yet    
-- maybe belong to refer category, but not contacted yet      
+
+### Time from onset to event (months)
+```{r}
+ggplotly(plot_event1)
+```
+
+
+### KM survival curve 
+```{r}
+plot_survival
+```
+
 
 Row
 ---------------
 
-### Time from the latest visit (Undefined FU status)
+### Time from the latest visit (months): Barplot       
 ```{r}
-plot_undefined_fu_duration
+ggplotly(plot_latestVisit2now)
 ```
 
-### KM estimate curve 
+### Time from the latest visit (months): Pie chart  
+
 ```{r}
-plot_survival
+plot_latestVisit2now_gr
 ```
+
 
 Biorepository 
 ======================

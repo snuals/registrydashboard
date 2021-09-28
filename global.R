@@ -5,15 +5,12 @@
 date_update_registry = Sys.Date()
 
 # Load packages 
-library(dplyr)
-library(ggplot2)
-
-#devtools::install_github("mrjoh3/pier")
-
+library(tidyverse)
 library(pier)
 library(plotly)
 library(survival)
 library(survminer)
+library(RColorBrewer)
 
 ## Designate files 
 # list_files = list.files("./data", pattern="*.csv")
@@ -40,35 +37,64 @@ biobank1 = read_sheet("https://docs.google.com/spreadsheets/d/1s_hc50zUIa9htn9CW
 biobank2 = read_sheet("https://docs.google.com/spreadsheets/d/1KKYsXyDcYk14XWdg-oBENa970-DKYdWO7cqmBsBy2D0/edit?usp=sharing")
 
 # Base 
-base$Date_birth = as.Date(base$Date_birth, format = "%Y-%m-%d")
-base$Date_onset = as.Date(base$Date_onset, format = "%Y-%m-%d")
-base$Date_dx = as.Date(base$Date_dx, format = "%Y-%m-%d")
-base$Date_enrollment = as.Date(base$Date_enrollment, format = "%Y-%m-%d")
+base = within(base, {
+  Date_birth = as.Date(Date_birth, format = "%Y-%m-%d")
+  Date_onset = as.Date(Date_onset, format = "%Y-%m-%d")
+  Date_dx = as.Date(Date_dx, format = "%Y-%m-%d")
+  Date_enrollment = as.Date(Date_enrollment, format = "%Y-%m-%d")
+})
+
 
 # Date of diagnosis: distribution 
-month_dx = as.Date(cut(base$Date_dx, 
-                               breaks = "month"))
-month_dx_df = as.data.frame(table(month_dx))
-month_dx_df$month_dx = 
-  as.Date(month_dx_df$month_dx)
+# plot_dx_month = base %>%
+#   mutate(month_dx = as.Date(cut(Date_dx, breaks = "month"))) %>%
+#   ggplot(aes(month_dx)) + 
+#   geom_bar(fill = "blue") +
+#   scale_x_date(date_labels = "%Y-%m") + 
+#   xlab("Month of diagnosis") + 
+#   ylab("Number of patients") + 
+#   theme(axis.text.x = 
+#           element_text(angle = 45, vjust = 0.5, hjust = 1)) 
+# ggplotly(plot_dx_month)
+# 
+# # Date of enrollment: distribution 
+# plot_enrollment_month = base %>%
+#   mutate(month_enrollment = as.Date(cut(Date_enrollment, 
+#                                         breaks = "month"))) %>%
+#   ggplot(aes(month_enrollment)) + 
+#   geom_bar(fill = "#99D594") +
+#   scale_x_date(date_labels = "%Y-%m") + 
+#   xlab("Month of enrollment") + 
+#   ylab("Number of patients enrolled") + 
+#   theme(axis.text.x = 
+#           element_text(angle = 45, vjust = 0.5, hjust = 1)) 
+# ggplotly(plot_enrollment_month)
 
-plot_dx_month = ggplot(month_dx_df, aes(month_dx, Freq)) + 
-  geom_bar(stat = "identity", fill = "blue") +
-  scale_x_date(date_labels = "%Y-%m") + 
-  xlab("Month of diagnosis") + 
-  ylab("Number of patients") + 
-  theme(axis.text.x = 
-          element_text(angle = 45, vjust = 0.5, hjust = 1)) 
-ggplotly(plot_dx_month)
+# Exclude cases diagnosed before 2016-01-01 (1 year before the official start of registry)
+# Exclude cases enrolled before 2017-01-01 
+baseline = base %>%
+  filter(Date_dx > "2016-01-01") %>%
+  filter(Date_enrollment > "2017-01-01")
+
+# Date of diagnosis: distribution 
+# plot_dx_month = baseline %>%
+#   mutate(month_dx = as.Date(cut(Date_dx, breaks = "month"))) %>%
+#   ggplot(aes(month_dx)) + 
+#   geom_bar(fill = "blue") +
+#   scale_x_date(date_labels = "%Y-%m") + 
+#   xlab("Month of diagnosis") + 
+#   ylab("Number of patients") + 
+#   theme(axis.text.x = 
+#           element_text(angle = 45, vjust = 0.5, hjust = 1)) 
+# ggplotly(plot_dx_month)
+
 
 # Date of enrollment: distribution 
-month_enrollment = as.Date(cut(base$Date_enrollment, 
-                               breaks = "month"))
-month_enrollment_df = as.data.frame(table(month_enrollment))
-month_enrollment_df$month_enrollment = 
-  as.Date(month_enrollment_df$month_enrollment)
-plot_enrollment_month = ggplot(month_enrollment_df, aes(month_enrollment, Freq)) + 
-  geom_bar(stat = "identity", fill = "#99D594") +
+plot_enrollment_month = baseline %>%
+  mutate(month_enrollment = as.Date(cut(Date_enrollment, 
+                                        breaks = "month"))) %>%
+  ggplot(aes(month_enrollment)) + 
+  geom_bar(fill = "#99D594") +
   scale_x_date(date_labels = "%Y-%m") + 
   xlab("Month of enrollment") + 
   ylab("Number of patients enrolled") + 
@@ -76,86 +102,16 @@ plot_enrollment_month = ggplot(month_enrollment_df, aes(month_enrollment, Freq))
           element_text(angle = 45, vjust = 0.5, hjust = 1)) 
 ggplotly(plot_enrollment_month)
 
-# filter base data
-# diagnosis after 2016-01-01 (1 year before the official start of registry)
-# enrollment after 2017-01-01 
-baseline = base %>%
-  filter(Date_dx > "2016-01-01") %>%
-  filter(Date_enrollment > "2017-01-01")
-
-month_dx = as.Date(cut(baseline$Date_dx, 
-                       breaks = "month"))
-month_dx_df = as.data.frame(table(month_dx))
-month_dx_df$month_dx = 
-  as.Date(month_dx_df$month_dx)
-
-# Date of diagnosis: distribution 
-plot_dx_month = ggplot(month_dx_df, aes(month_dx, Freq)) + 
-  geom_bar(stat = "identity", fill = "blue") +
-  scale_x_date(date_labels = "%Y-%m") + 
-  xlab("Month of diagnosis") + 
-  ylab("Number of patients") + 
-  theme(axis.text.x = 
-          element_text(angle = 45, vjust = 0.5, hjust = 1)) 
-ggplotly(plot_dx_month)
-
-# Date of enrollment: distribution 
-month_enrollment = as.Date(cut(baseline$Date_enrollment, 
-                       breaks = "month"))
-month_enrollment_df = as.data.frame(table(month_enrollment))
-month_enrollment_df$month_enrollment = 
-  as.Date(month_enrollment_df$month_enrollment)
-
-plot_enrollment_month = ggplot(month_enrollment_df, aes(month_enrollment, Freq)) + 
-  geom_bar(stat = "identity", fill = "blue") +
-  scale_x_date(date_labels = "%Y-%m") + 
-  xlab("Month of diagnosis") + 
-  ylab("Number of patients") + 
-  theme(axis.text.x = 
-          element_text(angle = 45, vjust = 0.5, hjust = 1)) 
-ggplotly(plot_enrollment_month)
-
-# fu 
-#fu = read.csv(fu_file, na.strings = c(NA, ""))
-# all_na_rows = apply(fu, 1, function(x){all(is.na(x))}) 
-# all_na_cols = apply(fu, 2, function(x){all(is.na(x))}) 
-# fu = fu[!(all_na_rows), !(all_na_cols)]
-fu$Date_visit = as.Date(fu$Date_visit, format = "%Y-%m-%d")
-fu$Mitos = factor(fu$Mitos)
-#fu$FVC_percent = as.numeric(fu$FVC_percent)
-fu$King = factor(fu$King)
-
-# event 
-# event = read.csv(event_file, na.strings = c("", NA))
-# all_na_cols = apply(event, 2, function(x){all(is.na(x))})
-# all_na_rows = apply(event, 1, function(x){all(is.na(x))})
-# event = event[,!(all_na_cols)]
-# event = event[!(all_na_rows),]
-event$Date_event = as.Date(event$Date_event, format = "%Y-%m-%d")
-
-# close 
-# close = read.csv(close_file, na.strings = c("",NA))
-# all_na_cols = apply(close, 2, function(x){all(is.na(x))})
-# all_na_rows = apply(close, 1, function(x){all(is.na(x))})
-# close = close[!all_na_rows, !all_na_cols]
-close$Date_close = as.Date(close$Date_close, format = "%Y-%m-%d")
-
-# biobank
-# biobank1 = read.csv(Biobank1_file, na.strings = c("", NA))
-# biobank2 = read.csv(Biobank2_file, na.strings = c("", NA))
-
-# Dx: ALS 
-als <- baseline %>%
-  filter(Dx == "ALS")
-
-# plot: mnd by type composition
+# Diagnosis composition
 dx_df = baseline %>%
   filter(!is.na(Dx)) %>%
   group_by(Dx) %>%
   count()  
+
 data_dx <- data.frame(label = dx_df$Dx,
-                   value = dx_df$n,
-                   color = RColorBrewer::brewer.pal(dim(dx_df)[1], 'Spectral'))
+                      value = dx_df$n,
+                      color = brewer.pal(dim(dx_df)[1], 'Spectral'))
+
 plot_mnd_type = data_dx %>%
   pier() %>%
   pie.size(inner=60, outer=80, width = 500, height = 400) %>%
@@ -165,16 +121,65 @@ plot_mnd_type = data_dx %>%
                         date_update_registry, sep = " "),
              location = 'bottom-left') %>%
   pie.tooltips()
+
 plot_mnd_type
 
-# Plot: ALS sex composition 
+# Dx: missing, others, PMA, PLS, and ALS variants such as PBP, FAS, FLS
+dx_uk = baseline %>%
+  filter(is.na(Dx))
+dim(dx_uk) # 20 patients with missing dx ? 
+
+dx_others = baseline %>%
+  filter(Dx == "Others")
+dim(dx_others) # 48 patients with dx == Others ? 
+# PMA or ALS?  
+# PBP? FLS? FAS? 
+# PLS? 
+
+dx_PBP= baseline %>%
+  filter(Dx == "PBP")
+dim(dx_PBP) # 16 patients 
+
+# fu 
+fu = within(fu, {
+  Date_visit = as.Date(Date_visit, format = "%Y-%m-%d")
+  Mitos = factor(Mitos)
+  King = factor(King)
+})
+
+# event 
+event$Date_event = as.Date(event$Date_event, format = "%Y-%m-%d")
+
+# close 
+close$Date_close = as.Date(close$Date_close, format = "%Y-%m-%d")
+
+# biobank
+
+########################  ALS ##########################
+
+als <- baseline %>% # from dx table 
+  filter(Dx == "ALS")
+
+fu_als = fu %>% 
+  filter(Study_ID %in% als$Study_ID) 
+
+event_als = event %>%
+  filter(Study_ID %in% als$Study_ID)
+
+close_als = close %>%
+  filter(Study_ID %in% als$Study_ID)
+
+# Sex composition 
 sex_df <- als %>% 
   group_by(Sex) %>% 
   count() 
-col2 = RColorBrewer::brewer.pal(3, 'Spectral')
+
+col2 = brewer.pal(3, 'Spectral')
+
 data_sex <- data.frame(label = sex_df$Sex,
                    value = sex_df$n,
                    color = c("#FC8D59","#99D594"))
+
 plot_sex = data_sex %>%
   pier() %>%
   pie.size(inner=60, outer=80, width = 500, height = 400) %>%
@@ -184,78 +189,146 @@ plot_sex = data_sex %>%
                         date_update_registry, sep = " "),
              location = 'bottom-left') %>%
   pie.tooltips()
+
 plot_sex  
 
-# Plot: ALS Age (at dx) and sex distribution 
+# Age (at dx) and sex distribution 
 als = als %>%
-  mutate(age = floor(as.numeric(Date_dx-Date_birth)/365)) %>%
+  mutate(age = floor(as.numeric(Date_dx - Date_birth)/365)) %>%
   mutate(age_gr = cut(age, breaks = seq(20,90, by=10), 
                       include.lowest = T, right = F))
-age.sex.df = as.data.frame(table(als$Sex, als$age_gr))
-colnames(age.sex.df) = c("Sex", "Age", "Freq")
+
+age.sex.df = als %>%
+  count(Sex, age_gr)
+
 age_median = median(als$age, na.rm = T)
-plot_age = ggplot(age.sex.df, aes(Age, Freq)) + 
+
+plot_age = ggplot(age.sex.df, aes(age_gr, n)) + 
   geom_bar(stat = "identity", aes(fill = Sex), 
            position = "dodge") +
-  ggtitle("Age at diagnosis") + 
   ylab("Number of patients") + 
   theme_bw() + 
   geom_text(x = 2, y = 40, 
             label = paste("Median age", age_median, sep=" = "))
+
 plot_age
 
-# Plot: ALS onset to diagnosis (months) distribution
-als <- als %>%
-  mutate(onset2dx = round(as.numeric(Date_dx - Date_onset)/30))
-onset2dx_median = median(als$onset2dx, na.rm = T)
-plot_onset2dx = ggplot(data = als, aes(x=onset2dx)) + 
-  geom_histogram(col = "dark grey", fill = "purple", binwidth = 3) + 
-  ggtitle("Onset to diagnosis (months)") + 
-  ylab("Number of patients") + 
-  xlab("Time from onset to diagnosis (months)") + 
-  theme_bw() + 
-  geom_text(x=100, y=50, label = paste("Median (months)", 
-                                       onset2dx_median, 
-                                       sep = " = "))
-plot_onset2dx
+# Create dataframe on time variables 
+# from als (dx table), fu_als (fu table), event and close 
 
-# Plot: ALS onset region composition 
+# onset, dx, enrollment
+temp1 = als %>%
+  select(Study_ID, Date_onset, Date_dx, Date_enrollment)
+
+# first visit, latest visit, fu duration 
+temp2 = fu_als %>% 
+  group_by(Study_ID) %>%
+  summarise(firstVisit = min(Date_visit), 
+            latestVisit = max(Date_visit), 
+            fu_duration = round(as.numeric(difftime(latestVisit, firstVisit, units = "days"))/365*12, 1))
+
+# date_gastro, date_niv, date_tracheo, date_death, 
+# date_refer, date_lost2fu
+close_als = close_als %>%
+  rename(Date_event = Date_close, Event = Close_reason) 
+
+event_close_als = rbind(event_als, close_als)
+
+temp3 = spread(event_close_als, key = "Event", 
+               value = "Date_event")
+temp3 = temp3 %>%
+  rename(Date_gastro = Gastrostomy, 
+         Date_niv = NIV, 
+         Date_tracheo = Tracheostomy,
+         Date_lost2fu = `Lost to f/u`, 
+         Date_refer = Refer, 
+         Date_death = Death)
+
+time_df = temp1 %>%
+  left_join(temp2, by = "Study_ID") %>%
+  left_join(temp3, by = "Study_ID")
+
+# Onset to diagnosis (months) distribution
+# Diagnosis to enrollment (months) distribution
+# Enrollment to the first visit (months) distribution
+time_df_initial <- time_df %>%
+  mutate(onset2dx = round(as.numeric(Date_dx - Date_onset)/365*12, 1), 
+         dx2enroll = round(as.numeric(Date_enrollment - Date_dx)/365*12, 1), 
+         enroll2firstVisit = round(as.numeric(firstVisit - Date_enrollment)/365*12,1)
+         )
+
+time_df_initial_long = time_df_initial %>%
+  select(Study_ID, onset2dx, dx2enroll, enroll2firstVisit) %>%
+  gather(key = "period", value = "months", onset2dx:enroll2firstVisit) %>%
+  mutate(period = factor(period, levels = c("onset2dx", 
+                                            "dx2enroll",
+                                            "enroll2firstVisit"), 
+                         labels = c("Onset to Dx", "Dx to Enroll", "Enroll to Visit (1st)")))
+
+plot_time_initial = ggplot(time_df_initial_long, 
+                           aes(months, fill = period)) + 
+  geom_histogram(color = "gray") + 
+  ylab("Number of patients") + 
+  xlab("Time (months)") + 
+  facet_wrap(.~ period, scales = "free") + 
+  theme(legend.position = "none")
+
+plot_time_initial
+
+# check weird (I)
+time_df_initial %>%
+  filter(onset2dx < 0|dx2enroll < 0|enroll2firstVisit <0) %>%
+  select(Study_ID, onset2dx, dx2enroll, enroll2firstVisit, 
+         Date_onset, Date_dx, Date_enrollment, 
+         firstVisit)
+
+# check weird (II)
+# onset2dx > 90 percentile value 
+time_df_initial %>%
+  filter(onset2dx > quantile(time_df_initial$onset2dx, 
+                             probs = seq(0,1,0.1))[10]) %>%
+  select(Study_ID, onset2dx, Date_onset, Date_dx)
+
+# dx2enroll > 90 percentile value 
+time_df_initial %>%
+  filter(dx2enroll > quantile(time_df_initial$dx2enroll, 
+                             probs = seq(0,1,0.1))[10]) %>%
+  select(Study_ID, dx2enroll, Date_dx, Date_enrollment)
+
+# enroll2firstVisit > 0 or NA 
+time_df_initial %>%
+  filter(is.na(enroll2firstVisit)|enroll2firstVisit>0) %>%
+  select(Study_ID, enroll2firstVisit, Date_enrollment, firstVisit)
+
+# ALS onset region composition 
 onset_region_df <- als %>% 
   group_by(Onset_region) %>% 
   count()
+
 data_onset_region <- data.frame(label = onset_region_df$Onset_region,
                         value = onset_region_df$n,
-                        color = RColorBrewer::brewer.pal(dim(onset_region_df)[1], 'Spectral'))
+                        color = brewer.pal(dim(onset_region_df)[1], 'Spectral'))
+
 plot_onset_region = data_onset_region %>%
   pier() %>%
   pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='ALS', location='pie-center') %>%
   pie.subtitle(text='by onset region') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
+  pie.header(text=paste('The SNU ALS/MND Registry', 
                         date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
+             location = 'top-left') %>%
   pie.tooltips()
+
 plot_onset_region
 
-# Follow-up: ALS patients 
-fu_als = fu %>%
-  filter(Study_ID %in% als$Study_ID) %>%
-  group_by(Study_ID) %>%
-  arrange(Date_visit) %>%
-  mutate(Visit_no = rank(Date_visit)) %>%
-  mutate(Visit_interval_mo = round(as.numeric(difftime(Date_visit, Date_visit[1], 
-                                   units = "days"))/30), 1)
+# Follow-up duration diatribution (I)
+# from the first vist to the latest visit (in fu table)
+median_fu_mo = median(time_df_initial$fu_duration, na.rm = T)
 
-# Plot: follow-up duration distribution 
-fu_als_duration = fu_als %>%
-  group_by(Study_ID) %>%
-  summarize(FU_duration = max(Visit_interval_mo))
-median_fu_mo = median(fu_als_duration$FU_duration)
-plot_fu_duration = ggplot(fu_als_duration, 
-                          aes(FU_duration)) + 
+plot_fu_duration = ggplot(time_df_initial, 
+                          aes(fu_duration)) + 
   geom_histogram(col = "dark grey", fill = "violet", 
                  binwidth = 1) + 
-  ggtitle("FU duration (months)") + 
   ylab("Number of patients") + 
   xlab("Time from entry to the latest visit (months)") + 
   theme_bw() + 
@@ -264,355 +337,289 @@ plot_fu_duration = ggplot(fu_als_duration,
                                       sep = " = "))
 plot_fu_duration
 
-# Time from entry to the latest visit 
-# Number of patients followed longer than 3, 6, 12 mo 
-fu_als_duration_gr = fu_als_duration %>%
-  mutate(FU_duration_gr = cut(FU_duration, 
+# Follow-up duration diatribution (II)
+fu_als_duration_gr = time_df_initial %>%
+  mutate(fu_duration_gr = cut(fu_duration, 
                               breaks = c(0,3,6,12,Inf), 
                               include.lowest = T, right = F))
-levels(fu_als_duration_gr$FU_duration_gr) = c(
+
+levels(fu_als_duration_gr$fu_duration_gr) = c(
   "Less than 3 mo", "3 to 6 mo", "6 to 12 mo", "Longer than 12 mo"
 )
+
 temp = fu_als_duration_gr %>% 
-  group_by(FU_duration_gr) %>% 
+  group_by(fu_duration_gr) %>% 
   count()
-data_fu_duration_gr <- data.frame(label = temp$FU_duration_gr,
+
+data_fu_duration_gr <- data.frame(label = temp$fu_duration_gr,
                                 value = temp$n,
-                                color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
+                                color = brewer.pal(dim(temp)[1], 'Spectral'))
+
 plot_fu_duration_pie = data_fu_duration_gr %>%
   pier() %>%
   pie.size(inner=60, outer=80, width = 500, height = 400) %>%
   pie.header(text='FU duration', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
+  pie.header(text=paste('The SNU ALS/MND Registry', 
                         date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
+             location = "top-left") %>%
+  pie.footer(text = "Undefined: enrolled, but no visit record in fu table", 
+             location = "bottom-left") %>%
   pie.tooltips()
+
 plot_fu_duration_pie
 
 # Temporal change of ALSFRS-R 
-# only in patients with 2 or more visit ALSFRS 
+# exclude patients with only one visit  
 fu_alsfrs = fu_als %>%
   filter(!is.na(ALSFRS)) %>%
   group_by(Study_ID) %>%
-  mutate(Max_visit_no = max(Visit_no)) %>%
-  mutate(FU_duration = max(Visit_interval_mo)) %>%
-  filter(FU_duration > 0) 
-slope_alsfrs = fu_alsfrs %>%
+  mutate(cnt = n()) %>%
+  filter(cnt > 1)
+
+temp = fu_alsfrs %>%
   group_by(Study_ID) %>%
-  summarize(Slope = (last(ALSFRS)-first(ALSFRS))/
-           last(Visit_interval_mo))
-q4 = quantile(slope_alsfrs$Slope, probs = c(0,0.25,0.75,1))
-temp = merge(fu_alsfrs, slope_alsfrs, by="Study_ID")
-temp$slope_gr = cut(temp$Slope, breaks = q4, include.lowest = T, 
-                    right = F)
-plot_alsfrs = ggplot(temp, 
-       aes(Visit_interval_mo, ALSFRS, 
+  arrange(Date_visit) %>%
+  mutate(fu_duration = as.numeric(Date_visit - min(Date_visit)), 
+         fu_duration = round(fu_duration/365*12,1)) %>%
+  select(Study_ID, fu_duration, ALSFRS, Date_visit)
+
+temp_slope = temp %>%
+  group_by(Study_ID) %>%
+  arrange(Date_visit) %>%
+  summarise(slope = round((last(ALSFRS)-first(ALSFRS))/
+                            max(fu_duration), 1))
+
+q4 = quantile(temp_slope$slope, probs = c(0,0.25,0.75,1))
+
+temp_slope$slope_gr = cut(temp_slope$slope, 
+                            breaks = q4, 
+                            include.lowest = T, 
+                            right = F)
+temp_slope_alsfrs = temp %>%
+  left_join(temp_slope, by = "Study_ID")
+
+plot_alsfrs = ggplot(temp_slope_alsfrs, 
+       aes(fu_duration, ALSFRS, 
            col=slope_gr, group=factor(Study_ID))) +
   geom_point() + geom_line() +  theme_bw() +
   xlab("Time from baseline (months)") +
   ylab("ALSFRS-R") + 
-#  facet_wrap(.~slope_gr) + 
+  facet_wrap(.~slope_gr) + 
   labs(col = "Slope (delta/mo)")
+
 plot_alsfrs
 
 # Temporal change of weight
 fu_wt = fu_als %>%
   filter(!is.na(Wt)) %>%
   group_by(Study_ID) %>%
-  mutate(Max_visit_no = max(Visit_no)) %>%
-  mutate(FU_duration = max(Visit_interval_mo)) %>%
-  filter(FU_duration > 0) 
-slope_wt = fu_wt %>%
+  mutate(cnt = n()) %>%
+  filter(cnt > 1) 
+
+temp_wt = fu_wt %>%
+  group_by(Study_ID) %>% 
+  mutate(fu_duration = as.numeric(Date_visit - min(Date_visit)), 
+       fu_duration = round(fu_duration/365*12,1)) %>%
+  select(Study_ID, fu_duration, Wt, Date_visit)
+
+slope_wt = temp_wt %>%
   group_by(Study_ID) %>%
-  summarize(Slope = (last(Wt)-first(Wt))/
-              last(Visit_interval_mo))
-q4 = quantile(slope_wt$Slope, probs = c(0,0.25,0.75,1))
-temp = merge(fu_wt, slope_wt, by="Study_ID")
-temp$slope_gr = cut(temp$Slope, breaks = q4, include.lowest = T, 
+  arrange(Date_visit) %>%
+  summarise(slope = round((last(Wt)-first(Wt))/
+                            max(fu_duration), 1))
+
+q4 = quantile(slope_wt$slope, probs = c(0,0.25,0.75,1))
+temp = merge(temp_wt, slope_wt, by="Study_ID")
+
+temp$slope_gr = cut(temp$slope, breaks = q4, include.lowest = T, 
                     right = F)
+
 plot_wt = ggplot(temp, 
-                     aes(Visit_interval_mo, Wt, 
+                     aes(fu_duration, Wt, 
                          col=slope_gr, group=factor(Study_ID))) +
   geom_point() + geom_line() +  theme_bw() +
   xlab("Time from baseline (months)") +
   ylab("Wt") + 
-  #  facet_wrap(.~slope_gr) + 
+  facet_wrap(.~slope_gr) + 
   labs(col = "Slope (delta/mo)")
+
 plot_wt
 
 # Temporal change of FVC   
-fu_FVC_percent = fu_als %>%
+fu_FVC = fu_als %>%
   filter(!is.na(FVC_percent)) %>%
   group_by(Study_ID) %>%
-  mutate(Max_visit_no = max(Visit_no)) %>%
-  mutate(FU_duration = max(Visit_interval_mo)) %>%
-  filter(FU_duration > 0) 
-slope_FVC_percent = fu_FVC_percent %>%
+  mutate(cnt = n()) %>%
+  filter(cnt > 1)
+
+temp_FVC = fu_FVC %>%
   group_by(Study_ID) %>%
-  summarize(Slope = (last(FVC_percent)-first(FVC_percent))/
-              last(Visit_interval_mo))
-q3 = quantile(slope_FVC_percent$Slope, probs = c(0,0.25,0.75,1))
-temp = merge(fu_FVC_percent, slope_FVC_percent, by="Study_ID")
-temp$slope_gr = cut(temp$Slope, breaks = q3, include.lowest = T, 
+  mutate(fu_duration = as.numeric(Date_visit - min(Date_visit)), 
+         fu_duration = round(fu_duration/365*12,1)) %>%
+  select(Study_ID, fu_duration, FVC_percent, Date_visit)
+
+slope_FVC = temp_FVC %>%
+  group_by(Study_ID) %>%
+  arrange(Date_visit) %>%
+  summarise(slope = round((last(FVC_percent)-first(FVC_percent))/
+                            max(fu_duration), 1))
+
+q4 = quantile(slope_FVC$slope, probs = c(0,0.25,0.75,1))
+temp = merge(temp_FVC, slope_FVC, by="Study_ID")
+
+temp$slope_gr = cut(temp$slope, breaks = q4, 
+                    include.lowest = T, 
                     right = F)
+
 plot_FVC_percent = ggplot(temp, 
-                 aes(Visit_interval_mo, FVC_percent, 
+                 aes(fu_duration, FVC_percent, 
                      col=slope_gr, group=factor(Study_ID))) +
   geom_point() + geom_line() +  theme_bw() +
   xlab("Time from baseline (months)") +
   ylab("FVC (% of predicted)") + 
-  #  facet_wrap(.~slope_gr) + 
+  facet_wrap(.~slope_gr) + 
   labs(col = "Slope (delta/mo)")
+
 plot_FVC_percent
 
-# Event
-event_als = event %>%
-  filter(Study_ID %in% als$Study_ID)
+# Proportion: event, close 
+event_df = event_als %>%
+  count(Event) %>%
+  mutate(Prop = round(n/length(als$Study_ID)*100, 1))
 
-# Gastrostomy 
-gastrostomy_als = event_als %>%
-  filter(Event == "Gastrostomy")
-gastrostromy_pct = round(dim(gastrostomy_als)[1]/dim(als)[1]*100,1)
-temp1 = merge(als, gastrostomy_als, by="Study_ID", all.x = T)
-fu_als_latest = fu_als %>%
+event_df
+
+close_df = close_als %>%
+  count(Event) %>%
+  mutate(Prop = round(n/length(als$Study_ID)*100, 1))
+
+close_df
+
+# Distribution; onset to gastrostomy and NIV (months)
+event_als_fu1 = event_als %>%
+  filter(Event %in% c("Gastrostomy", "NIV")) %>%
+  inner_join(als, by = "Study_ID") %>% 
   group_by(Study_ID) %>%
-  filter(Visit_no == max(Visit_no))
-temp2 = merge(temp1, fu_als_latest, by="Study_ID")
-gastrostomy_als_fu = temp2 %>% 
-  select(Study_ID, Event, Date_dx, Date_event, Date_visit) %>%
-  mutate(dx2event = round(
+  select(Study_ID, Event, Date_onset, Date_event) %>%
+  mutate(onset2event = round(
     as.numeric(
-      difftime(Date_event, Date_dx, units = "days")
-    )/30
-  )) %>%
-  mutate(dx2latestVisit = round(
-    as.numeric(
-      difftime(Date_visit, Date_dx, units = "days")
-    )/30
-  ))
+      difftime(Date_event, Date_onset, units = "days")
+    )/365*12
+  )) 
 
-plot_gastostomy = ggplot(gastrostomy_als_fu, aes(dx2event)) + 
+max_onset2event1 <- max(event_als_fu1$onset2event)
+
+plot_event1 = ggplot(event_als_fu1, aes(onset2event)) + 
   geom_histogram(col = "dark grey", fill = "blue", 
                  binwidth = 3) + 
-  ggtitle("Time from diagnosis to gastrostomy (months)") + 
   ylab("Number of patients") + 
   xlab("Time (months)") + 
+  scale_x_continuous(limits = c(0,max_onset2event1), oob = scales::squish) + 
+  facet_wrap(.~factor(Event)) + 
   theme_bw() 
-plot_gastostomy
 
-# NIV 
-NIV_als = event_als %>%
-  filter(Event == "NIV")
-NIV_pct = round((dim(NIV_als)[1]/dim(als)[1])*100, 1)
-temp1 = merge(als, NIV_als, by="Study_ID", all.x = T)
-temp2 = merge(temp1, fu_als_latest, by="Study_ID")
-NIV_als_fu = temp2 %>% 
-  select(Study_ID, Event, Date_dx, Date_event, Date_visit) %>%
-  mutate(dx2event = round(
-    as.numeric(
-      difftime(Date_event, Date_dx, units = "days")
-    )/30
-  )) %>%
-  mutate(dx2latestVisit = round(
-    as.numeric(
-      difftime(Date_visit, Date_dx, units = "days")
-    )/30
-  ))
+plot_event1 
 
-plot_NIV = ggplot(NIV_als_fu, aes(dx2event)) + 
-  geom_histogram(col = "dark grey", fill = "blue", 
-                 binwidth = 3) + 
-  ggtitle("Time from diagnosis to NIV (months)") + 
-  ylab("Number of patients") + 
-  xlab("Time (months)") + 
-  theme_bw() 
-plot_NIV
+# distribution: enroll2death_tracheo
+# latestVisit2lost2fu, latestVisit2refer; should be zero 
+time_df_close = event_close_als %>%
+  filter(Event %in% c("Death", "Tracheostomy")) %>%
+  group_by(Study_ID) %>%
+  summarise(Date_death_tracheo = min(Date_event)) %>%
+  right_join(subset(time_df, select = c("Study_ID", 
+                                        "Date_enrollment", 
+                                        "latestVisit", 
+                                        "Date_lost2fu",
+                                        "Date_refer")), 
+             by = "Study_ID")
 
-# Tracheostomy
-Tracheostomy_als = event_als %>%
-  filter(Event == "Tracheostomy")
-Tracheostomy_pct = round((dim(Tracheostomy_als)[1]/dim(als)[1])*100, 1)
-temp1 = merge(als, Tracheostomy_als, by="Study_ID", all.x = T)
-temp2 = merge(temp1, fu_als_latest, by="Study_ID")
-Tracheostomy_als_fu = temp2 %>% 
-  select(Study_ID, Event, Date_dx, Date_event, Date_visit) %>%
-  mutate(dx2event = round(
-    as.numeric(
-      difftime(Date_event, Date_dx, units = "days")
-    )/30
-  )) %>%
-  mutate(dx2latestVisit = round(
-    as.numeric(
-      difftime(Date_visit, Date_dx, units = "days")
-    )/30
-  ))
+# Death or Tracheostomy 
+# KM curve for death (or tracheostomy)
+# from enrollment 
+# caluculate enroll2death_tracheo, enroll2latestVisit 
 
-plot_tracheostomy = ggplot(Tracheostomy_als_fu, aes(dx2event)) + 
-  geom_histogram(col = "dark grey", fill = "blue", binwidth = 3) + 
-  ggtitle("Time from diagnosis to Tracheostomy (months)") + 
-  ylab("Number of patients") + 
-  xlab("Time (months)") + 
-  theme_bw() 
-plot_tracheostomy
+time_df_close = time_df_close %>%
+  mutate(enroll2death_tracheo = 
+           round(as.numeric(Date_death_tracheo - Date_enrollment)/365*12, 1), 
+         enroll2latestVisit = 
+           round(as.numeric(latestVisit - Date_enrollment)/365*12, 1))
 
-# Death 
-death_als = close %>%
-  filter(Close_reason == "Death")
-death_pct = round((dim(death_als)[1]/dim(als)[1])*100, 1)
-temp1 = merge(als, death_als, by="Study_ID", all.x = T)
-temp2 = merge(temp1, fu_als_latest, by="Study_ID")
-death_als_fu = temp2 %>% 
-  select(Study_ID, Close_reason, Date_dx, Date_close, Date_visit) %>%
-  mutate(dx2death = round(
-    as.numeric(
-      difftime(Date_close, Date_dx, units = "days")
-    )/30
-  )) %>%
-  mutate(dx2latestVisit = round(
-    as.numeric(
-      difftime(Date_visit, Date_dx, units = "days")
-    )/30
-  ))
+# Death table 
+KM = time_df_close %>%
+  mutate(Status = ifelse(is.na(Date_death_tracheo), 0, 1)) %>%
+  mutate(Time = ifelse(is.na(enroll2death_tracheo), 
+                       enroll2latestVisit, enroll2death_tracheo)) %>%
+  select(Study_ID, Status, Time) 
 
-plot_death = ggplot(death_als_fu, aes(dx2death)) + 
-  geom_histogram(col = "dark grey", fill = "blue", binwidth = 3) + 
-  ggtitle("Time from diagnosis to death (months)") + 
-  ylab("Number of patients") + 
-  xlab("Time (months)") + 
-  theme_bw() 
-plot_death
+dim(KM) # enrolled, but no time record (eg, no latestVisit)
 
-# KM curve for event (including gastrostomy, NIV, tracheostomy and death) 
-KM_death = death_als_fu %>%
-  mutate(Outcome = "Death") %>%
-  mutate(Status = ifelse(is.na(Close_reason), 0, 1)) %>%
-  mutate(Time = ifelse(is.na(dx2death), dx2latestVisit, dx2death)) %>%
-  select(Study_ID, Outcome, Status, Time, Date_close)
-colnames(KM_death)[5] = "Date"
+fit <- survfit(Surv(Time, Status) ~ 1, data = KM)
 
-KM_gastrostomy = gastrostomy_als_fu %>%
-  mutate(Outcome = "Gastrostomy") %>%
-  mutate(Status = ifelse(is.na(Event), 0, 1)) %>%
-  mutate(Time = ifelse(is.na(dx2event), dx2latestVisit, dx2event)) %>%
-  select(Study_ID, Outcome, Status, Time, Date_event)
-colnames(KM_gastrostomy)[5] = "Date"
-
-KM_NIV = NIV_als_fu %>%
-  mutate(Outcome = "NIV") %>%
-  mutate(Status = ifelse(is.na(Event), 0, 1)) %>%
-  mutate(Time = ifelse(is.na(dx2event), dx2latestVisit, dx2event)) %>%
-  select(Study_ID, Outcome, Status, Time, Date_event)
-colnames(KM_NIV)[5] = "Date"
-
-KM_tracheostomy = Tracheostomy_als_fu %>%
-  mutate(Outcome = "Tracheostomy") %>%
-  mutate(Status = ifelse(is.na(Event), 0, 1)) %>%
-  mutate(Time = ifelse(is.na(dx2event), dx2latestVisit, dx2event)) %>%
-  select(Study_ID, Outcome, Status, Time, Date_event)
-colnames(KM_tracheostomy)[5] = "Date"
-
-KM = rbind(KM_death, KM_gastrostomy, KM_NIV, KM_tracheostomy)
-KM$Outcome = factor(KM$Outcome)
-levels(KM$Outcome) = list(
-  Gastrostomy = "Gastrostomy", 
-  NIV = "NIV", 
-  Death_or_tracheostomy = c("Death", "Trachestomy"))
-KM_5years = KM %>%
-  filter(Time < 70)
-
-fit <- survfit(Surv(Time, Status) ~ Outcome, data = KM_5years)
-
-plot_survival = ggsurvplot(fit, data = KM_5years, 
+plot_survival = ggsurvplot(fit, data = KM, 
            conf.int = T, 
            risk.table = T, 
-           xlim = c(0,70), 
            break.time.by = 12, 
-           legend = c(0.25, 0.25),
-           legend.labs = c("Gastrostomy", 
-                           "NIV",
-                           "Death_or_tracheostomy"), 
-           title = "KM estimates survival curve", 
-           ggtheme = theme_bw())
+           title = "KM survival curve (death or tracheostomy)", 
+           ggtheme = theme_bw(),
+           surv.median.line = "hv", 
+           legend = "none", 
+           xlab = "Months from enrollment"
+           )
 plot_survival
 
-# plot: fu status, pie chart 
-data_death_tracheostomy = KM %>%
-  filter(Outcome == "Death_or_tracheostomy") %>%
-  filter(Status == 1) %>%
-  droplevels() %>%
-  select(Study_ID, Outcome, Date)
-data_refer = close %>%
-  filter(Close_reason == "Refer") %>%
-  droplevels() %>%
-  select(Study_ID, Close_reason, Date_close)
-colnames(data_refer)[c(2,3)] = c("Outcome", "Date")
-data_lost2fu = close %>%
-  filter(Close_reason == "Lost to f/u") %>%
-  droplevels() %>%
-  select(Study_ID, Close_reason, Date_close)
-colnames(data_lost2fu)[c(2,3)] = c("Outcome", "Date")
-data_outcome = rbind(data_death_tracheostomy, 
-                     data_refer, 
-                     data_lost2fu)
-data_latest_fu = fu_als_latest %>%
-  select(Study_ID, Date_visit)
-colnames(data_latest_fu)[2] = "Date"
-data_fu_outcome = merge(data_latest_fu, 
-                        data_outcome, 
-                        by="Study_ID", all.x = T)
-data_fu_outcome = data_fu_outcome %>%
-  select(Study_ID, Outcome, Date.x, Date.y)
-colnames(data_fu_outcome)[c(3,4)] = c("Date_latestVisit", 
-                                      "Date_outcome")
-temp = data_fu_outcome %>%
-  group_by(Outcome) %>%
-  count()
-count_fu_outcome <- data.frame(label = temp$Outcome,
-                          value = temp$n,
-                          color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
-plot_fu_outcome = count_fu_outcome %>%
-  pier() %>%
-  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
-  pie.header(text='FU status', location='pie-center') %>%
-  pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
-  pie.tooltips()
-plot_fu_outcome
+# Close vs. Not-closed 
+# Close refers to the end of all tracking attempts, which ...
+# includes death, refer, and lost2fu
+# Note that this does not apply to the following... 
+# refer, but tracking is ongoing... 
+# Note that tracking is ongoing (eg, by phone), do not close with lost2fu
 
-# plot: fu status, undefined  
-# time between the latest visit to registry update date (months)
-undefined_fu_outcome = data_fu_outcome %>% 
-  filter(is.na(Outcome)) %>%
-  mutate(duration_missing_mo = round(
-    as.numeric(
-      difftime(
-        as.Date(date_update_registry, format = "%Y-%m-%d"),
-        Date_latestVisit, 
-               units = "days"))/30))
-undefined_fu_outcome$missing_dur_gr = cut(undefined_fu_outcome$duration_missing_mo, 
-             breaks = c(0,3,6,Inf), include.lowest = T, right = F)
-levels(undefined_fu_outcome$missing_dur_gr) = c("Less than 3 mo", 
-                                               "3 to 6 mo", 
-                                               "Longer than 6 mo")
-temp = undefined_fu_outcome %>%
-  group_by(missing_dur_gr) %>%
+# Distribution of time from the latest visit.. 
+# in not-closed cases 
+time_df_close2 = time_df_close %>%
+  filter(!(Study_ID %in% close_als$Study_ID)) %>%
+  mutate(latestVisit2now = 
+           round(as.numeric(date_update_registry - latestVisit)/365*12, 1)) %>%
+  select(Study_ID, latestVisit2now, latestVisit)
+
+dim(time_df_close2)
+time_df_close2 %>% 
+  filter(latestVisit2now > 6)
+
+plot_latestVisit2now = time_df_close2 %>%
+  ggplot(aes(latestVisit2now)) + 
+  geom_histogram(col = "dark grey", fill = "blue") + 
+  xlab("Time from the latest visit (months)") + 
+  ylab("Number of patients")
+
+plot_latestVisit2now
+
+time_df_close2$time_gr = cut(time_df_close2$latestVisit2now, 
+                             breaks = c(0,3,6,Inf), 
+                             include.lowest = T, 
+                             right = F)
+temp = time_df_close2 %>%
+  filter(!is.na(time_gr)) %>%
+  group_by(time_gr) %>%
   count()
-data_undefined_fu_outcome <- data.frame(label = temp$missing_dur_gr,
-                               value = temp$n,
-                               color = RColorBrewer::brewer.pal(dim(temp)[1], 'Spectral'))
-plot_undefined_fu_duration = data_undefined_fu_outcome %>%
+
+levels(temp$time_gr) = list(less_than_3mo = "[0,3)", 
+                             btw_3mo_6mo = "[3,6)", 
+                             longer_than_6mo = "[6,Inf]")
+
+data_time <- data.frame(label = temp$time_gr, 
+                       value = temp$n, 
+                       color = brewer.pal(dim(temp)[1], 'Spectral'))
+
+plot_latestVisit2now_gr = data_time %>%
   pier() %>%
-  pie.size(inner=60, outer=80, width = 500, height = 400) %>%
-  pie.header(text='Time from the latest visit', location='pie-center') %>%
+  pie.size(inner=50, outer=70, width = 250, height = 300)  %>%
+  pie.header(text='Time from the latest visit (mo)', location='pie-center') %>%
   pie.subtitle(text='ALS') %>%
-  pie.footer(text=paste('The SNU ALS/MND Registry', 
-                        date_update_registry, sep = " "),
-             location = 'bottom-left') %>%
   pie.tooltips()
-plot_undefined_fu_duration
+
+plot_latestVisit2now_gr
 
 # Biobank
 
