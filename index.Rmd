@@ -4,7 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     navbar:
-      - { title: "Interactive Case Review", href: "https://yoonhohong.shinyapps.io/ALSregistry2/"}
+      - { title: "Interactive Case Review", href: "https://yoonhohong.shinyapps.io/alsregistry/"}
     social: menu
     source_code: https://github.com/snuals/registrydashboard
     vertical_layout: scroll
