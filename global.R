@@ -138,13 +138,11 @@ dim(dx_others) # 48 patients with dx == Others ?
 
 dx_PBP= baseline %>%
   filter(Dx == "PBP")
-dim(dx_PBP) # 16 patients 
+dim(dx_PBP)
 
 # fu 
 fu = within(fu, {
   Date_visit = as.Date(Date_visit, format = "%Y-%m-%d")
-  Mitos = factor(Mitos)
-  King = factor(King)
 })
 
 # event 
@@ -390,7 +388,8 @@ temp_slope = temp %>%
   summarise(slope = round((last(ALSFRS)-first(ALSFRS))/
                             max(fu_duration), 1))
 
-q4 = quantile(temp_slope$slope, probs = c(0,0.25,0.75,1))
+q4 = quantile(temp_slope$slope, 
+              probs = c(0,0.25,0.75,1), na.rm = T)
 
 temp_slope$slope_gr = cut(temp_slope$slope, 
                             breaks = q4, 
@@ -409,6 +408,7 @@ plot_alsfrs = ggplot(temp_slope_alsfrs,
   labs(col = "Slope (delta/mo)")
 
 plot_alsfrs
+ggplotly(plot_alsfrs)
 
 # Temporal change of weight
 fu_wt = fu_als %>%
@@ -429,7 +429,7 @@ slope_wt = temp_wt %>%
   summarise(slope = round((last(Wt)-first(Wt))/
                             max(fu_duration), 1))
 
-q4 = quantile(slope_wt$slope, probs = c(0,0.25,0.75,1))
+q4 = quantile(slope_wt$slope, probs = c(0,0.25,0.75,1), na.rm = T)
 temp = merge(temp_wt, slope_wt, by="Study_ID")
 
 temp$slope_gr = cut(temp$slope, breaks = q4, include.lowest = T, 
@@ -445,10 +445,11 @@ plot_wt = ggplot(temp,
   labs(col = "Slope (delta/mo)")
 
 plot_wt
+ggplotly(plot_wt)
 
 # Temporal change of FVC   
 fu_FVC = fu_als %>%
-  filter(!is.na(FVC_percent)) %>%
+  filter(!is.na(FVC)) %>%
   group_by(Study_ID) %>%
   mutate(cnt = n()) %>%
   filter(cnt > 1)
@@ -457,12 +458,12 @@ temp_FVC = fu_FVC %>%
   group_by(Study_ID) %>%
   mutate(fu_duration = as.numeric(Date_visit - min(Date_visit)), 
          fu_duration = round(fu_duration/365*12,1)) %>%
-  select(Study_ID, fu_duration, FVC_percent, Date_visit)
+  select(Study_ID, fu_duration, FVC, Date_visit)
 
 slope_FVC = temp_FVC %>%
   group_by(Study_ID) %>%
   arrange(Date_visit) %>%
-  summarise(slope = round((last(FVC_percent)-first(FVC_percent))/
+  summarise(slope = round((last(FVC)-first(FVC))/
                             max(fu_duration), 1))
 
 q4 = quantile(slope_FVC$slope, probs = c(0,0.25,0.75,1))
@@ -473,7 +474,7 @@ temp$slope_gr = cut(temp$slope, breaks = q4,
                     right = F)
 
 plot_FVC_percent = ggplot(temp, 
-                 aes(fu_duration, FVC_percent, 
+                 aes(fu_duration, FVC, 
                      col=slope_gr, group=factor(Study_ID))) +
   geom_point() + geom_line() +  theme_bw() +
   xlab("Time from baseline (months)") +
